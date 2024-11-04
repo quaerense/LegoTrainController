@@ -1,4 +1,4 @@
-package com.quaerense.legotraincontroller.view
+package com.quaerense.legotraincontroller.view.ui
 
 import android.content.Context
 import android.graphics.Canvas

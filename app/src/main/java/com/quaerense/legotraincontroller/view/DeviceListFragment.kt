@@ -1,4 +1,4 @@
-package com.quaerense.legotraincontroller
+package com.quaerense.legotraincontroller.view
 
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -9,7 +9,7 @@ import android.view.ViewGroup
 import android.view.Window
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
-import com.quaerense.legotraincontroller.adapter.RemoteDeviceAdapter
+import com.quaerense.legotraincontroller.view.adapter.RemoteDeviceAdapter
 import com.quaerense.legotraincontroller.databinding.FragmentDeviceListBinding
 
 class DeviceListFragment : DialogFragment() {
@@ -39,14 +39,9 @@ class DeviceListFragment : DialogFragment() {
             mainViewModel.connect(mac)
         }
         rvDevices.adapter = remoteDeviceAdapter
-        showPairedDevices()
-    }
-
-    private fun showPairedDevices() {
-        val remoteDevices = mutableListOf<RemoteDevice>()
-        mainViewModel.btAdapter?.bondedDevices?.forEach { device ->
-            remoteDevices.add(RemoteDevice(device.address, device.name))
+        mainViewModel.showPairedDevices()
+        mainViewModel.pairedDevicesLiveData.observe(viewLifecycleOwner) { devices ->
+            remoteDeviceAdapter.submitList(devices)
         }
-        remoteDeviceAdapter.submitList(remoteDevices)
     }
 }

@@ -1,4 +1,4 @@
-package com.quaerense.legotraincontroller
+package com.quaerense.legotraincontroller.connection
 
 import android.bluetooth.BluetoothAdapter
 

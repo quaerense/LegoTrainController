@@ -1,4 +1,4 @@
-package com.quaerense.legotraincontroller
+package com.quaerense.legotraincontroller.view
 
 import android.bluetooth.BluetoothManager
 import android.content.Context
@@ -57,8 +57,7 @@ class MainActivity : AppCompatActivity() {
                 mainViewModel.sendMessage(8)
             }
 
-            init()
-
+            mainViewModel.initBtAdapter(getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager)
             mainViewModel.connectionStatusLiveData.observe(this@MainActivity) { status ->
                 runOnUiThread {
                     Toast.makeText(this@MainActivity, status, Toast.LENGTH_SHORT).show()
@@ -67,17 +66,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun init() {
-        val btManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        mainViewModel.btAdapter = btManager.adapter
-    }
-
     private fun simulateClick(view: View) {
-        // Получаем координаты центра View
         val centerX = 103.75
         val centerY = 193.0
 
-        // Создаем событие нажатия
         val downEvent = MotionEvent.obtain(
             System.currentTimeMillis(),
             System.currentTimeMillis(),
@@ -87,10 +79,8 @@ class MainActivity : AppCompatActivity() {
             0
         )
 
-        // Отправляем событие нажатия
         view.dispatchTouchEvent(downEvent)
 
-        // Создаем событие отпускания
         val upEvent = MotionEvent.obtain(
             System.currentTimeMillis(),
             System.currentTimeMillis(),
@@ -100,10 +90,8 @@ class MainActivity : AppCompatActivity() {
             0
         )
 
-        // Отправляем событие отпускания
         view.dispatchTouchEvent(upEvent)
 
-        // Освобождаем ресурсы
         downEvent.recycle()
         upEvent.recycle()
     }

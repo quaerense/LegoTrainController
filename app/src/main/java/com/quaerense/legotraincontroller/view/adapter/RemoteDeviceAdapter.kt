@@ -1,9 +1,9 @@
-package com.quaerense.legotraincontroller.adapter
+package com.quaerense.legotraincontroller.view.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
-import com.quaerense.legotraincontroller.RemoteDevice
+import com.quaerense.legotraincontroller.connection.RemoteDevice
 import com.quaerense.legotraincontroller.databinding.RemoteDeviceItemBinding
 
 class RemoteDeviceAdapter(

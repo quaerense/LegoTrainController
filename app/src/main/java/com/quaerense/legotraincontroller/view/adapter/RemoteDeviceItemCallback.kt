@@ -1,7 +1,7 @@
-package com.quaerense.legotraincontroller.adapter
+package com.quaerense.legotraincontroller.view.adapter
 
 import androidx.recyclerview.widget.DiffUtil
-import com.quaerense.legotraincontroller.RemoteDevice
+import com.quaerense.legotraincontroller.connection.RemoteDevice
 
 object RemoteDeviceItemCallback : DiffUtil.ItemCallback<RemoteDevice>() {
     override fun areItemsTheSame(oldItem: RemoteDevice, newItem: RemoteDevice): Boolean {

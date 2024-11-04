@@ -1,4 +1,4 @@
-package com.quaerense.legotraincontroller.adapter
+package com.quaerense.legotraincontroller.view.adapter
 
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.quaerense.legotraincontroller.databinding.RemoteDeviceItemBinding
