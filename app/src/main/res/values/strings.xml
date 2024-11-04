@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Lego Train Controller</string>
+    <string name="start">Start</string>
+    <string name="on">On</string>
+    <string name="off">Off</string>
+    <string name="paired_devices">Paired devices</string>
+    <string name="connection_started">Connection started..</string>
+    <string name="connected">Connected</string>
+    <string name="connection_closed">Disconnected</string>
+    <string name="connection_failed">Connection failed</string>
+    <string name="stop">Stop</string>
+</resources>
