@@ -39,9 +39,9 @@ class DeviceListFragment : DialogFragment() {
             mainViewModel.connect(mac)
         }
         rvDevices.adapter = remoteDeviceAdapter
-        mainViewModel.showPairedDevices()
         mainViewModel.pairedDevicesLiveData.observe(viewLifecycleOwner) { devices ->
             remoteDeviceAdapter.submitList(devices)
         }
+        mainViewModel.showPairedDevices()
     }
 }

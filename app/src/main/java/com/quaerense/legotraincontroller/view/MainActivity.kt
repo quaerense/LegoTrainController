@@ -67,15 +67,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun simulateClick(view: View) {
-        val centerX = 103.75
-        val centerY = 193.0
+        val centerX = (view.x + view.width) / 4
+        val centerY = (view.y + view.height) / 4
 
         val downEvent = MotionEvent.obtain(
             System.currentTimeMillis(),
             System.currentTimeMillis(),
             MotionEvent.ACTION_DOWN,
-            centerX.toFloat(),
-            centerY.toFloat(),
+            centerX,
+            centerY,
             0
         )
 
@@ -85,8 +85,8 @@ class MainActivity : AppCompatActivity() {
             System.currentTimeMillis(),
             System.currentTimeMillis(),
             MotionEvent.ACTION_UP,
-            centerX.toFloat(),
-            centerY.toFloat(),
+            centerX,
+            centerY,
             0
         )
 
