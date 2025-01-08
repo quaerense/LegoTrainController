@@ -46,8 +46,4 @@ class VerticalSeekBar @JvmOverloads constructor(
 
         return true
     }
-
-    override fun setProgress(progress: Int) {
-        super.setProgress(progress.coerceIn(1, max)) // Ограничиваем значение прогресса
-    }
 }

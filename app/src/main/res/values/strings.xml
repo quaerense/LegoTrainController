@@ -7,6 +7,7 @@
     <string name="connection_started">Connection started..</string>
     <string name="connected">Connected</string>
     <string name="connection_closed">Disconnected</string>
+    <string name="connection_closing">Disconnecting..</string>
     <string name="connection_failed">Connection failed</string>
     <string name="stop">Stop</string>
     <string name="zero" translatable="false">0</string>

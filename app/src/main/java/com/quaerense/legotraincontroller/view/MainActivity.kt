@@ -1,13 +1,18 @@
 package com.quaerense.legotraincontroller.view
 
+import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.Manifest.permission.BLUETOOTH_CONNECT
+import android.Manifest.permission.BLUETOOTH_SCAN
+import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
-import android.view.MotionEvent
-import android.view.View
 import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.quaerense.legotraincontroller.databinding.ActivityMainBinding
@@ -23,6 +28,35 @@ class MainActivity : AppCompatActivity() {
         )[MainViewModel::class.java]
     }
 
+    private val requestMultiplePermissions = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        if (permissions[BLUETOOTH_SCAN] == true && permissions[BLUETOOTH_CONNECT] == true && permissions[ACCESS_FINE_LOCATION] == true) {
+            mainViewModel.startScan()
+        }
+    }
+
+    private val requestEnableBluetooth = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            mainViewModel.startScan()
+        } else {
+            // denied
+        }
+    }
+
+    private fun requestBluetooth() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            requestMultiplePermissions.launch(
+                arrayOf(BLUETOOTH_SCAN, BLUETOOTH_CONNECT, ACCESS_FINE_LOCATION)
+            )
+        } else {
+            val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+            requestEnableBluetooth.launch(enableBtIntent)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -33,6 +67,7 @@ class MainActivity : AppCompatActivity() {
                 override fun onProgressChanged(
                     seekBar: SeekBar?, progress: Int, fromUser: Boolean
                 ) {
+                    mainViewModel.sendMessage(progress.toByte())
                     val speed = when (progress) {
                         1, 7 -> 90
                         2, 6 -> 60
@@ -40,21 +75,18 @@ class MainActivity : AppCompatActivity() {
                         else -> 0
                     }
                     tvSpeedometer.text = speed.toString()
-                    mainViewModel.sendMessage(progress.toByte())
                 }
 
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {}
                 override fun onStopTrackingTouch(seekBar: SeekBar) {}
             })
 
-            btnSearchDevices.setOnClickListener {
-                DeviceListFragment().show(supportFragmentManager, null)
+            btnBtConnect.setOnClickListener {
+                requestBluetooth()
             }
             btnStop.setOnClickListener {
-                simulateClick(sbTrainPower)
-            }
-            btnDoors.setOnClickListener {
-
+                mainViewModel.sendMessage(0)
+                sbTrainPower.progress = 4
             }
 
             mainViewModel.initBtAdapter(getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager)
@@ -64,35 +96,5 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-    }
-
-    private fun simulateClick(view: View) {
-        val centerX = 103.75
-        val centerY = 193.0
-
-        val downEvent = MotionEvent.obtain(
-            System.currentTimeMillis(),
-            System.currentTimeMillis(),
-            MotionEvent.ACTION_DOWN,
-            centerX.toFloat(),
-            centerY.toFloat(),
-            0
-        )
-
-        view.dispatchTouchEvent(downEvent)
-
-        val upEvent = MotionEvent.obtain(
-            System.currentTimeMillis(),
-            System.currentTimeMillis(),
-            MotionEvent.ACTION_UP,
-            centerX.toFloat(),
-            centerY.toFloat(),
-            0
-        )
-
-        view.dispatchTouchEvent(upEvent)
-
-        downEvent.recycle()
-        upEvent.recycle()
     }
 }

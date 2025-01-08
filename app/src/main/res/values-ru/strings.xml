@@ -4,10 +4,11 @@
     <string name="start">Старт</string>
     <string name="on">Включить</string>
     <string name="off">Отключить</string>
-    <string name="paired_devices">Сопряженные устройства</string>
-    <string name="connection_started">Идет подключение..</string>
+    <string name="paired_devices">Сопряжённые устройства</string>
+    <string name="connection_started">Идёт подключение..</string>
     <string name="connected">Подключено</string>
     <string name="connection_closed">Отключено</string>
+    <string name="connection_closing">Идёт отключение..</string>
     <string name="connection_failed">Ошибка подключения</string>
     <string name="stop">Стоп</string>
 </resources>

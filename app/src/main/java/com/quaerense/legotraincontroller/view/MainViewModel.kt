@@ -12,19 +12,13 @@ import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.os.Handler
 import android.os.Looper
-import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.quaerense.legotraincontroller.connection.RemoteDevice
+import com.quaerense.legotraincontroller.R
 import java.util.UUID
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val _pairedDevicesLiveData = MutableLiveData<List<RemoteDevice>>()
-    val pairedDevicesLiveData: LiveData<List<RemoteDevice>>
-        get() = _pairedDevicesLiveData
-
     private val _connectionStatusLiveData = MutableLiveData<Int>()
     val connectionStatusLiveData: LiveData<Int>
         get() = _connectionStatusLiveData
@@ -32,29 +26,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var btAdapter: BluetoothAdapter? = null
     private var btGatt: BluetoothGatt? = null
     private var btGattService: BluetoothGattService? = null
+    private var btGattCharacteristic: BluetoothGattCharacteristic? = null
     private var deviceUuid: UUID? = null
-    private var characteristic: BluetoothGattCharacteristic? = null
 
     private val bluetoothGattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
-            Toast.makeText(
-                application,
+            _connectionStatusLiveData.postValue(
                 when (newState) {
-                    BluetoothProfile.STATE_DISCONNECTED -> "STATE_DISCONNECTED"
-                    BluetoothProfile.STATE_CONNECTING -> "STATE_CONNECTING"
-                    BluetoothProfile.STATE_CONNECTED -> "STATE_CONNECTED"
-                    BluetoothProfile.STATE_DISCONNECTING -> "STATE_DISCONNECTING"
-                    else -> ""
-                },
-                Toast.LENGTH_SHORT
-            ).show()
+                    BluetoothProfile.STATE_DISCONNECTED -> R.string.connection_closed
+                    BluetoothProfile.STATE_CONNECTING -> R.string.connection_started
+                    BluetoothProfile.STATE_CONNECTED -> R.string.connected
+                    BluetoothProfile.STATE_DISCONNECTING -> R.string.connection_closing
+                    else -> throw IllegalStateException("No such connection state")
+                }
+            )
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 btGattService = btGatt?.getService(deviceUuid)
                 btGatt?.getService(deviceUuid)
-                characteristic = btGattService?.characteristics?.get(0)
+                btGattCharacteristic = btGattService?.characteristics?.get(0)
             }
         }
     }
@@ -84,7 +76,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun sendMessage(message: Byte) {
-        characteristic?.let {
+        btGattCharacteristic?.let {
             it.setValue(byteArrayOf(message))
             btGatt?.writeCharacteristic(it)
         }
