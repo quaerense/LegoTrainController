@@ -17,7 +17,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     private val mainViewModel: MainViewModel by lazy {
-        ViewModelProvider(this)[MainViewModel::class.java]
+        ViewModelProvider(
+            this,
+            ViewModelProvider.AndroidViewModelFactory(application)
+        )[MainViewModel::class.java]
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,9 +31,7 @@ class MainActivity : AppCompatActivity() {
         with(binding) {
             sbTrainPower.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
                 override fun onProgressChanged(
-                    seekBar: SeekBar?,
-                    progress: Int,
-                    fromUser: Boolean
+                    seekBar: SeekBar?, progress: Int, fromUser: Boolean
                 ) {
                     val speed = when (progress) {
                         1, 7 -> 90
@@ -39,7 +40,7 @@ class MainActivity : AppCompatActivity() {
                         else -> 0
                     }
                     tvSpeedometer.text = speed.toString()
-                    mainViewModel.sendMessage(progress)
+                    mainViewModel.sendMessage(progress.toByte())
                 }
 
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {}
@@ -51,10 +52,9 @@ class MainActivity : AppCompatActivity() {
             }
             btnStop.setOnClickListener {
                 simulateClick(sbTrainPower)
-                mainViewModel.sendMessage(0)
             }
             btnDoors.setOnClickListener {
-                mainViewModel.sendMessage(8)
+
             }
 
             mainViewModel.initBtAdapter(getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager)
