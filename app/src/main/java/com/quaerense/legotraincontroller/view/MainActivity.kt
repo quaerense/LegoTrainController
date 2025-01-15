@@ -13,9 +13,15 @@ import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import com.quaerense.legotraincontroller.R
 import com.quaerense.legotraincontroller.databinding.ActivityMainBinding
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -23,8 +29,7 @@ class MainActivity : AppCompatActivity() {
 
     private val mainViewModel: MainViewModel by lazy {
         ViewModelProvider(
-            this,
-            ViewModelProvider.AndroidViewModelFactory(application)
+            this, ViewModelProvider.AndroidViewModelFactory(application)
         )[MainViewModel::class.java]
     }
 
@@ -67,14 +72,9 @@ class MainActivity : AppCompatActivity() {
                 override fun onProgressChanged(
                     seekBar: SeekBar?, progress: Int, fromUser: Boolean
                 ) {
-                    mainViewModel.sendMessage(progress.toByte())
-                    val speed = when (progress) {
-                        1, 7 -> 90
-                        2, 6 -> 60
-                        3, 5 -> 30
-                        else -> 0
-                    }
+                    val speed = progress - 255
                     tvSpeedometer.text = speed.toString()
+                    mainViewModel.sendMessage(speed)
                 }
 
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {}
@@ -85,16 +85,29 @@ class MainActivity : AppCompatActivity() {
                 requestBluetooth()
             }
             btnStop.setOnClickListener {
-                mainViewModel.sendMessage(0)
-                sbTrainPower.progress = 4
+                mainViewModel.sendMessage(777)
+                sbTrainPower.progress = 255
             }
 
             mainViewModel.initBtAdapter(getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager)
-            mainViewModel.connectionStatusLiveData.observe(this@MainActivity) { status ->
-                runOnUiThread {
-                    Toast.makeText(this@MainActivity, status, Toast.LENGTH_SHORT).show()
+            lifecycleScope.launch {
+                mainViewModel.connectionStatusStateFlow.flowWithLifecycle(
+                    lifecycle,
+                    Lifecycle.State.CREATED
+                ).collect { status ->
+                    when (status) {
+                        ConnectionState.Disconnected -> showMessage(R.string.connection_closed)
+                        ConnectionState.Connecting -> showMessage(R.string.connection_started)
+                        ConnectionState.Connected -> showMessage(R.string.connected)
+                        ConnectionState.Disconnecting -> showMessage(R.string.connection_closing)
+                        ConnectionState.None -> {}
+                    }
                 }
             }
         }
+    }
+
+    private fun showMessage(@StringRes messageId: Int) {
+        Toast.makeText(this@MainActivity, getString(messageId), Toast.LENGTH_SHORT).show()
     }
 }

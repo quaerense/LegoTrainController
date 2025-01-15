@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattCharacteristic.FORMAT_SINT32
 import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
@@ -13,15 +14,13 @@ import android.bluetooth.le.ScanResult
 import android.os.Handler
 import android.os.Looper
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import com.quaerense.legotraincontroller.R
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.util.UUID
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
-    private val _connectionStatusLiveData = MutableLiveData<Int>()
-    val connectionStatusLiveData: LiveData<Int>
-        get() = _connectionStatusLiveData
+    private val _connectionStatusStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.None)
+    val connectionStatusStateFlow = _connectionStatusStateFlow.asStateFlow()
 
     private var btAdapter: BluetoothAdapter? = null
     private var btGatt: BluetoothGatt? = null
@@ -29,17 +28,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var btGattCharacteristic: BluetoothGattCharacteristic? = null
     private var deviceUuid: UUID? = null
 
+    private val messageHandler = Handler(Looper.getMainLooper())
+    private val scanHandler = Handler(Looper.getMainLooper())
+
     private val bluetoothGattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
-            _connectionStatusLiveData.postValue(
-                when (newState) {
-                    BluetoothProfile.STATE_DISCONNECTED -> R.string.connection_closed
-                    BluetoothProfile.STATE_CONNECTING -> R.string.connection_started
-                    BluetoothProfile.STATE_CONNECTED -> R.string.connected
-                    BluetoothProfile.STATE_DISCONNECTING -> R.string.connection_closing
-                    else -> throw IllegalStateException("No such connection state")
-                }
-            )
+            _connectionStatusStateFlow.value = when (newState) {
+                BluetoothProfile.STATE_DISCONNECTED -> ConnectionState.Disconnected
+                BluetoothProfile.STATE_CONNECTING -> ConnectionState.Connecting
+                BluetoothProfile.STATE_CONNECTED -> ConnectionState.Connected
+                BluetoothProfile.STATE_DISCONNECTING -> ConnectionState.Disconnecting
+                else -> throw IllegalStateException("No such connection state")
+            }
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
@@ -58,7 +58,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 stopScan()
                 btGatt = device.connectGatt(application, false, bluetoothGattCallback)
                 deviceUuid = result.scanRecord?.serviceUuids?.get(0)?.uuid
-                Handler(Looper.getMainLooper()).postDelayed({ btGatt?.discoverServices() }, 2000)
+                scanHandler.postDelayed(
+                    { btGatt?.discoverServices() },
+                    2000
+                )
             }
         }
     }
@@ -75,10 +78,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         btAdapter = bluetoothManager.adapter
     }
 
-    fun sendMessage(message: Byte) {
+    fun sendMessage(message: Int) {
         btGattCharacteristic?.let {
-            it.setValue(byteArrayOf(message))
-            btGatt?.writeCharacteristic(it)
+            messageHandler.removeCallbacksAndMessages(null)
+            messageHandler.postDelayed(
+                {
+                    it.setValue(message, FORMAT_SINT32, 0)
+                    btGatt?.writeCharacteristic(it)
+                },
+                20
+            )
         }
     }
 }
