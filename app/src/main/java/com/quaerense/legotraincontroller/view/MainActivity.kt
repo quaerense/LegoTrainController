@@ -11,10 +11,10 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.StringRes
+import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.flowWithLifecycle
@@ -96,10 +96,11 @@ class MainActivity : AppCompatActivity() {
                     Lifecycle.State.CREATED
                 ).collect { status ->
                     when (status) {
-                        ConnectionState.Disconnected -> showMessage(R.string.connection_closed)
-                        ConnectionState.Connecting -> showMessage(R.string.connection_started)
-                        ConnectionState.Connected -> showMessage(R.string.connected)
-                        ConnectionState.Disconnecting -> showMessage(R.string.connection_closing)
+                        ConnectionState.Disconnected -> connectionStatusChanged(R.drawable.ic_led_red)
+                        ConnectionState.Connecting -> connectionStatusChanged(R.drawable.ic_led_yellow)
+                        ConnectionState.Connected -> connectionStatusChanged(R.drawable.ic_led_green)
+                        ConnectionState.Disconnecting -> connectionStatusChanged(R.drawable.ic_led_yellow)
+
                         ConnectionState.None -> {}
                     }
                 }
@@ -107,7 +108,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showMessage(@StringRes messageId: Int) {
-        Toast.makeText(this@MainActivity, getString(messageId), Toast.LENGTH_SHORT).show()
+    private fun connectionStatusChanged(@DrawableRes ledId: Int) {
+        binding.ivConnectionStatus.setImageDrawable(
+            ResourcesCompat.getDrawable(
+                getResources(),
+                ledId,
+                theme
+            )
+        )
     }
 }
