@@ -52,7 +52,7 @@
         android:max="510"
         android:min="0"
         android:padding="8dp"
-        android:progress="4"
+        android:progress="255"
         android:progressDrawable="@drawable/custom_seekbar"
         android:splitTrack="false"
         android:thumb="@drawable/custom_thumb"
@@ -63,16 +63,17 @@
 
     <Button
         android:id="@+id/btnStop"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_margin="32dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginVertical="32dp"
         android:backgroundTint="@android:color/holo_red_light"
         android:contentDescription="@null"
-        android:padding="32dp"
+        android:padding="16dp"
         android:text="@string/stop"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@id/sbTrainPower"
-        app:layout_constraintStart_toStartOf="@id/sbTrainPower"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/sbTrainPower" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -54,10 +54,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val leScanCallback: ScanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             val device = result.device
-            if (device.address == "9C:9E:6E:F7:86:16") {
+            val uuid = result.scanRecord?.serviceUuids?.get(0)?.uuid
+            if (uuid.toString() == UUID) {
                 stopScan()
                 btGatt = device.connectGatt(application, false, bluetoothGattCallback)
-                deviceUuid = result.scanRecord?.serviceUuids?.get(0)?.uuid
+                deviceUuid = uuid
                 scanHandler.postDelayed(
                     { btGatt?.discoverServices() },
                     2000
@@ -67,7 +68,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun startScan() {
-        btAdapter?.bluetoothLeScanner?.startScan(leScanCallback)
+        if (connectionStatusStateFlow.value == ConnectionState.Connected) {
+            btGatt?.disconnect()
+        } else {
+            btAdapter?.bluetoothLeScanner?.startScan(leScanCallback)
+        }
     }
 
     private fun stopScan() {
@@ -86,8 +91,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     it.setValue(message, FORMAT_SINT32, 0)
                     btGatt?.writeCharacteristic(it)
                 },
-                20
+                50
             )
         }
+    }
+
+    companion object {
+
+        private const val UUID = "19b10000-e8f2-537e-4f6c-d104768a1214"
     }
 }

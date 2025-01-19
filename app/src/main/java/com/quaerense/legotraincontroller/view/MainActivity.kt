@@ -14,7 +14,7 @@ import android.widget.SeekBar.OnSeekBarChangeListener
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.res.ResourcesCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.flowWithLifecycle
@@ -37,6 +37,7 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         if (permissions[BLUETOOTH_SCAN] == true && permissions[BLUETOOTH_CONNECT] == true && permissions[ACCESS_FINE_LOCATION] == true) {
+            binding.btnBtConnect.isEnabled = false
             mainViewModel.startScan()
         }
     }
@@ -45,6 +46,7 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == RESULT_OK) {
+            binding.btnBtConnect.isEnabled = false
             mainViewModel.startScan()
         } else {
             // denied
@@ -85,8 +87,8 @@ class MainActivity : AppCompatActivity() {
                 requestBluetooth()
             }
             btnStop.setOnClickListener {
-                mainViewModel.sendMessage(777)
                 sbTrainPower.progress = 255
+                mainViewModel.sendMessage(777)
             }
 
             mainViewModel.initBtAdapter(getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager)
@@ -96,10 +98,25 @@ class MainActivity : AppCompatActivity() {
                     Lifecycle.State.CREATED
                 ).collect { status ->
                     when (status) {
-                        ConnectionState.Disconnected -> connectionStatusChanged(R.drawable.ic_led_red)
-                        ConnectionState.Connecting -> connectionStatusChanged(R.drawable.ic_led_yellow)
-                        ConnectionState.Connected -> connectionStatusChanged(R.drawable.ic_led_green)
-                        ConnectionState.Disconnecting -> connectionStatusChanged(R.drawable.ic_led_yellow)
+                        ConnectionState.Disconnected -> connectionStatusChanged(
+                            R.drawable.ic_bluetooth_searching,
+                            R.drawable.ic_led_red
+                        )
+
+                        ConnectionState.Connecting -> connectionStatusChanged(
+                            R.drawable.ic_bluetooth_searching,
+                            R.drawable.ic_led_yellow
+                        )
+
+                        ConnectionState.Connected -> connectionStatusChanged(
+                            R.drawable.ic_bluetooth_connected,
+                            R.drawable.ic_led_green
+                        )
+
+                        ConnectionState.Disconnecting -> connectionStatusChanged(
+                            R.drawable.ic_bluetooth_connected,
+                            R.drawable.ic_led_yellow
+                        )
 
                         ConnectionState.None -> {}
                     }
@@ -108,13 +125,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun connectionStatusChanged(@DrawableRes ledId: Int) {
-        binding.ivConnectionStatus.setImageDrawable(
-            ResourcesCompat.getDrawable(
-                getResources(),
-                ledId,
-                theme
-            )
-        )
+    private fun connectionStatusChanged(
+        @DrawableRes btDrawableId: Int,
+        @DrawableRes ledDrawableId: Int
+    ) {
+        binding.btnBtConnect.setImageDrawable(ContextCompat.getDrawable(this, btDrawableId))
+        binding.ivConnectionStatus.setImageDrawable(ContextCompat.getDrawable(this, ledDrawableId))
     }
 }
