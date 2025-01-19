@@ -37,7 +37,6 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         if (permissions[BLUETOOTH_SCAN] == true && permissions[BLUETOOTH_CONNECT] == true && permissions[ACCESS_FINE_LOCATION] == true) {
-            binding.btnBtConnect.isEnabled = false
             mainViewModel.startScan()
         }
     }
@@ -46,7 +45,6 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == RESULT_OK) {
-            binding.btnBtConnect.isEnabled = false
             mainViewModel.startScan()
         } else {
             // denied
