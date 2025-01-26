@@ -9,8 +9,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.widget.SeekBar
-import android.widget.SeekBar.OnSeekBarChangeListener
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
@@ -68,24 +66,17 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         with(binding) {
-            sbTrainPower.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
-                override fun onProgressChanged(
-                    seekBar: SeekBar?, progress: Int, fromUser: Boolean
-                ) {
-                    val speed = progress - 255
-                    tvSpeedometer.text = speed.toString()
-                    mainViewModel.sendMessage(speed)
-                }
-
-                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-                override fun onStopTrackingTouch(seekBar: SeekBar) {}
-            })
+            svTrainPower.onChangeListener = { progress ->
+                val speed = progress - 255
+                tvSpeedometer.text = speed.toString()
+                mainViewModel.sendMessage(speed)
+            }
 
             btnBtConnect.setOnClickListener {
                 requestBluetooth()
             }
             btnStop.setOnClickListener {
-                sbTrainPower.progress = 255
+                svTrainPower.setProgress(255)
                 mainViewModel.sendMessage(777)
             }
 
