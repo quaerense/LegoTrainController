@@ -36,6 +36,8 @@ class SliderView @JvmOverloads constructor(
     private var angleAnimator: ValueAnimator? = null
     private var currentAngle = 0f
 
+    private var isFirstLaunch = true
+
     var onChangeListener: ((Int) -> Unit)? = null
 
     init {
@@ -51,11 +53,15 @@ class SliderView @JvmOverloads constructor(
         super.onLayout(changed, left, top, right, bottom)
         halfWidth = width / 2f
         maxSliderHeight = height.toFloat() - width.toFloat()
-        setProgress(maxValue / 2)
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+
+        if (isFirstLaunch) {
+            setProgress(maxValue / 2)
+            isFirstLaunch = false
+        }
         paint.color = Color.WHITE
         canvas.drawRoundRect(0f, 0f, width.toFloat(), height.toFloat(), 64f, 64f, paint)
         paint.color = ContextCompat.getColor(context, R.color.light_blue)

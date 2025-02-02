@@ -11,8 +11,10 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.GravityCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.flowWithLifecycle
@@ -71,15 +73,20 @@ class MainActivity : AppCompatActivity() {
                 tvSpeedometer.text = speed.toString()
                 mainViewModel.sendMessage(speed)
             }
+            btnMenu.setOnClickListener {
+                drawerLayout.openDrawer(GravityCompat.START)
+            }
+            nvMenu.setNavigationItemSelectedListener { item ->
+                when (item.itemId) {
+                    R.id.item_connect -> requestBluetooth()
+                }
 
-            btnBtConnect.setOnClickListener {
-                requestBluetooth()
+                true
             }
             btnStop.setOnClickListener {
                 svTrainPower.setProgress(255)
                 mainViewModel.sendMessage(777)
             }
-
             mainViewModel.initBtAdapter(getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager)
             lifecycleScope.launch {
                 mainViewModel.connectionStatusStateFlow.flowWithLifecycle(
@@ -88,21 +95,25 @@ class MainActivity : AppCompatActivity() {
                 ).collect { status ->
                     when (status) {
                         ConnectionState.Disconnected -> connectionStatusChanged(
+                            R.string.connect,
                             R.drawable.ic_bluetooth_searching,
                             R.drawable.ic_led_red
                         )
 
                         ConnectionState.Connecting -> connectionStatusChanged(
+                            R.string.connect,
                             R.drawable.ic_bluetooth_searching,
                             R.drawable.ic_led_yellow
                         )
 
                         ConnectionState.Connected -> connectionStatusChanged(
+                            R.string.connected,
                             R.drawable.ic_bluetooth_connected,
                             R.drawable.ic_led_green
                         )
 
                         ConnectionState.Disconnecting -> connectionStatusChanged(
+                            R.string.connected,
                             R.drawable.ic_bluetooth_connected,
                             R.drawable.ic_led_yellow
                         )
@@ -115,10 +126,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun connectionStatusChanged(
+        @StringRes btStringId: Int,
         @DrawableRes btDrawableId: Int,
         @DrawableRes ledDrawableId: Int
     ) {
-        binding.btnBtConnect.setImageDrawable(ContextCompat.getDrawable(this, btDrawableId))
+        val connectItem = binding.nvMenu.menu.findItem(R.id.item_connect)
+        connectItem.setTitle(btStringId)
+        connectItem.setIcon(btDrawableId)
         binding.ivConnectionStatus.setImageDrawable(ContextCompat.getDrawable(this, ledDrawableId))
     }
 }

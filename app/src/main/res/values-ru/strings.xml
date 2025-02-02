@@ -11,4 +11,10 @@
     <string name="connection_closing">Идёт отключение..</string>
     <string name="connection_failed">Ошибка подключения</string>
     <string name="stop">Стоп</string>
+    <string name="menu">Меню</string>
+    <string name="connect">Подключиться</string>
+    <string name="disconnect">Отключиться</string>
+    <string name="instructions">Инструкции</string>
+    <string name="settings">Настройки</string>
+    <string name="about">О приложении</string>
 </resources>
