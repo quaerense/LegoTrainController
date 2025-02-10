@@ -1,23 +1,65 @@
 package com.quaerense.legotraincontroller.view
 
+import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.Manifest.permission.BLUETOOTH_CONNECT
+import android.Manifest.permission.BLUETOOTH_SCAN
+import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
-import android.view.MotionEvent
-import android.view.View
-import android.widget.SeekBar
-import android.widget.SeekBar.OnSeekBarChangeListener
-import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.core.view.GravityCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import com.quaerense.legotraincontroller.R
 import com.quaerense.legotraincontroller.databinding.ActivityMainBinding
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
     private val mainViewModel: MainViewModel by lazy {
-        ViewModelProvider(this)[MainViewModel::class.java]
+        ViewModelProvider(
+            this, ViewModelProvider.AndroidViewModelFactory(application)
+        )[MainViewModel::class.java]
+    }
+
+    private val requestMultiplePermissions = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        if (permissions[BLUETOOTH_SCAN] == true && permissions[BLUETOOTH_CONNECT] == true && permissions[ACCESS_FINE_LOCATION] == true) {
+            mainViewModel.startScan()
+        }
+    }
+
+    private val requestEnableBluetooth = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            mainViewModel.startScan()
+        } else {
+            // denied
+        }
+    }
+
+    private fun requestBluetooth() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            requestMultiplePermissions.launch(
+                arrayOf(BLUETOOTH_SCAN, BLUETOOTH_CONNECT, ACCESS_FINE_LOCATION)
+            )
+        } else {
+            val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+            requestEnableBluetooth.launch(enableBtIntent)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,73 +68,71 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         with(binding) {
-            sbTrainPower.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
-                override fun onProgressChanged(
-                    seekBar: SeekBar?,
-                    progress: Int,
-                    fromUser: Boolean
-                ) {
-                    val speed = when (progress) {
-                        1, 7 -> 90
-                        2, 6 -> 60
-                        3, 5 -> 30
-                        else -> 0
-                    }
-                    tvSpeedometer.text = speed.toString()
-                    mainViewModel.sendMessage(progress)
+            svTrainPower.onChangeListener = { progress ->
+                val speed = progress - 255
+                tvSpeedometer.text = speed.toString()
+                mainViewModel.sendMessage(speed)
+            }
+            btnMenu.setOnClickListener {
+                drawerLayout.openDrawer(GravityCompat.START)
+            }
+            nvMenu.setNavigationItemSelectedListener { item ->
+                when (item.itemId) {
+                    R.id.item_connect -> requestBluetooth()
                 }
 
-                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-                override fun onStopTrackingTouch(seekBar: SeekBar) {}
-            })
-
-            btnSearchDevices.setOnClickListener {
-                DeviceListFragment().show(supportFragmentManager, null)
+                true
             }
             btnStop.setOnClickListener {
-                simulateClick(sbTrainPower)
-                mainViewModel.sendMessage(0)
+                svTrainPower.setProgress(255)
+                mainViewModel.sendMessage(777)
             }
-            btnDoors.setOnClickListener {
-                mainViewModel.sendMessage(8)
-            }
-
             mainViewModel.initBtAdapter(getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager)
-            mainViewModel.connectionStatusLiveData.observe(this@MainActivity) { status ->
-                runOnUiThread {
-                    Toast.makeText(this@MainActivity, status, Toast.LENGTH_SHORT).show()
+            lifecycleScope.launch {
+                mainViewModel.connectionStatusStateFlow.flowWithLifecycle(
+                    lifecycle,
+                    Lifecycle.State.CREATED
+                ).collect { status ->
+                    when (status) {
+                        ConnectionState.Disconnected -> connectionStatusChanged(
+                            R.string.connect,
+                            R.drawable.ic_bluetooth_searching,
+                            R.drawable.ic_led_red
+                        )
+
+                        ConnectionState.Connecting -> connectionStatusChanged(
+                            R.string.connect,
+                            R.drawable.ic_bluetooth_searching,
+                            R.drawable.ic_led_yellow
+                        )
+
+                        ConnectionState.Connected -> connectionStatusChanged(
+                            R.string.connected,
+                            R.drawable.ic_bluetooth_connected,
+                            R.drawable.ic_led_green
+                        )
+
+                        ConnectionState.Disconnecting -> connectionStatusChanged(
+                            R.string.connected,
+                            R.drawable.ic_bluetooth_connected,
+                            R.drawable.ic_led_yellow
+                        )
+
+                        ConnectionState.None -> {}
+                    }
                 }
             }
         }
     }
 
-    private fun simulateClick(view: View) {
-        val centerX = (view.x + view.width) / 4
-        val centerY = (view.y + view.height) / 4
-
-        val downEvent = MotionEvent.obtain(
-            System.currentTimeMillis(),
-            System.currentTimeMillis(),
-            MotionEvent.ACTION_DOWN,
-            centerX,
-            centerY,
-            0
-        )
-
-        view.dispatchTouchEvent(downEvent)
-
-        val upEvent = MotionEvent.obtain(
-            System.currentTimeMillis(),
-            System.currentTimeMillis(),
-            MotionEvent.ACTION_UP,
-            centerX,
-            centerY,
-            0
-        )
-
-        view.dispatchTouchEvent(upEvent)
-
-        downEvent.recycle()
-        upEvent.recycle()
+    private fun connectionStatusChanged(
+        @StringRes btStringId: Int,
+        @DrawableRes btDrawableId: Int,
+        @DrawableRes ledDrawableId: Int
+    ) {
+        val connectItem = binding.nvMenu.menu.findItem(R.id.item_connect)
+        connectItem.setTitle(btStringId)
+        connectItem.setIcon(btDrawableId)
+        binding.ivConnectionStatus.setImageDrawable(ContextCompat.getDrawable(this, ledDrawableId))
     }
 }

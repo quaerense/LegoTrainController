@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:id="@+id/menu">
+        <item
+            android:id="@+id/item_connect"
+            android:icon="@drawable/ic_bluetooth_searching"
+            android:title="@string/connect" />
+        <item
+            android:id="@+id/item_instructions"
+            android:icon="@drawable/ic_instructions"
+            android:title="@string/instructions" />
+        <item
+            android:id="@+id/item_settings"
+            android:icon="@drawable/ic_settings"
+            android:title="@string/settings" />
+    </group>
+    <group>
+        <item
+            android:id="@+id/item_about"
+            android:icon="@drawable/ic_help"
+            android:title="@string/about" />
+    </group>
+</menu>
