@@ -15,9 +15,7 @@ import com.quaerense.legotraincontroller.R
 import kotlin.math.abs
 
 class SliderView @JvmOverloads constructor(
-    context: Context,
-    attrs: AttributeSet? = null,
-    defStyleAttr: Int = 0
+    context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
     private val paint = Paint()
@@ -27,6 +25,7 @@ class SliderView @JvmOverloads constructor(
     private var minValue = 0
     private var maxValue = 100
 
+    private var sliderAnimator: ValueAnimator? = null
     private var currentSliderHeight = 0f
     private var maxSliderHeight = 0f
 
@@ -66,13 +65,7 @@ class SliderView @JvmOverloads constructor(
         canvas.drawRoundRect(0f, 0f, width.toFloat(), height.toFloat(), 64f, 64f, paint)
         paint.color = ContextCompat.getColor(context, R.color.light_blue)
         canvas.drawRoundRect(
-            0f,
-            currentSliderHeight,
-            width.toFloat(),
-            height.toFloat(),
-            64f,
-            64f,
-            paint
+            0f, currentSliderHeight, width.toFloat(), height.toFloat(), 64f, 64f, paint
         )
         drawArrow(canvas)
     }
@@ -86,8 +79,7 @@ class SliderView @JvmOverloads constructor(
 
             MotionEvent.ACTION_MOVE -> {
                 currentSliderHeight = event.y.coerceIn(0f, maxSliderHeight)
-                val currentValue =
-                    (maxValue * (1 - (currentSliderHeight / maxSliderHeight))).toInt()
+                val currentValue = getCurrentValue()
                 onChangeListener?.invoke(currentValue)
                 if (angleAnimator == null || angleAnimator?.isRunning == false) {
                     rotateArrow(if (currentValue >= maxValue / 2) 0f else 180f)
@@ -106,8 +98,7 @@ class SliderView @JvmOverloads constructor(
 
     private fun drawArrow(canvas: Canvas) {
         val bitmap = (ContextCompat.getDrawable(
-            context,
-            R.drawable.arrow
+            context, R.drawable.arrow
         ) as VectorDrawable).toBitmap()
 
         paint.alpha = currentAlpha
@@ -144,8 +135,23 @@ class SliderView @JvmOverloads constructor(
     }
 
     fun setProgress(value: Int) {
-        onChangeListener?.invoke(value)
-        currentSliderHeight = maxSliderHeight * (value.toFloat() / maxValue.toFloat())
-        invalidate()
+        if (sliderAnimator == null || sliderAnimator?.isRunning == false) {
+            sliderAnimator = ValueAnimator.ofFloat(
+                currentSliderHeight,
+                maxSliderHeight * (value.toFloat() / maxValue.toFloat())
+            ).apply {
+                addUpdateListener { animation ->
+                    currentSliderHeight = animation.animatedValue as Float
+                    onChangeListener?.invoke(getCurrentValue())
+                    invalidate()
+                }
+                duration = 100
+                start()
+            }
+        }
+    }
+
+    private fun getCurrentValue(): Int {
+        return (maxValue * (1 - (currentSliderHeight / maxSliderHeight))).toInt()
     }
 }
